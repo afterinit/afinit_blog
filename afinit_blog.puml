@@ -1,0 +1,28 @@
+@startuml
+' 配置图表样式，使其更符合数据库ER图的视觉习惯
+hide circle
+skinparam linetype ortho
+skinparam EntityBackgroundColor #F9F9F9
+skinparam EntityBorderColor #333333
+
+' 定义 article 实体
+entity "article (博客文章表)" as article {
+  * id : bigint(20) <<PK>> -- 主键ID (AUTO_INCREMENT)
+  --
+  * title : varchar(128) -- 文章标题
+  summary : varchar(256) -- 文章摘要（用于列表展示）
+  * content : longtext -- Markdown纯文本正文（含图片公网链接）
+  * status : tinyint(4) -- 发布状态：0-草稿，1-已发布 (默认:1)
+  * view_count : int(11) -- 阅读量 (默认:0，由Redis高频写)
+  * like_count : int(11) -- 点赞数 (默认:0，由Redis高频写)
+  * create_time : datetime -- 创建时间
+  * update_time : datetime -- 更新时间
+}
+
+' 添加关于索引的底部附注
+note bottom of article
+  **复合索引**: idx_status_create_time (`status`, `create_time`)
+  **说明**: 优化首页列表基于发布状态和时间的倒序查询性能
+end note
+
+@enduml
