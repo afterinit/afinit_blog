@@ -20,6 +20,9 @@ public enum UserResultCode implements ResultCode {
     USER_PASSWORD_ERR(20054, "密码错误"),
     USER_ACCOUNT_LOCKED(20055, "账号已被冻结"),
 
+    DELETE_USER_OK(20061, "删除用户成功"),
+    DELETE_USER_ERR(20060, "删除用户失败,请稍后再试"),
+
     // === 认证与权限状态码 (204xx) ===
     AUTH_REFRESH_OK(20411, "刷新凭证成功"),
     AUTH_TOKEN_EXPIRED(20410, "登录已过期,请重新登录"),

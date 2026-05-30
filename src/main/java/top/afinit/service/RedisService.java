@@ -25,7 +25,7 @@ public interface RedisService {
     String getTokenStr(String key);
 
     //删除accessRedis
-    void rmAccessRedis();
+    void rmRedis(String key);
 
     //更新accessToken的值
     <T> void addAccessValue(String hashKey, T value);

@@ -32,6 +32,19 @@ public final class RedisConstants {
         // 时间单位
         public static final TimeUnit REFRESH_TOKEN_UNIT = TimeUnit.DAYS;
 
+
+        /**
+         * UserIdToAccessToken
+         */
+        // 缓存 Key 前缀
+        public static final String MAPPING_TOKEN_KEY = "auth:token:mapping:";
+        //时间
+        public static final Long MAPPING_TOKEN_TTL = 30L;
+        public static final Long MAPPING_TOKEN_MS_TTL = 30 * 60 * 1000L;
+        // 时间单位
+        public static final TimeUnit MAPPING_TOKEN_UNIT = TimeUnit.MINUTES;
+
+
         public static final class Param{
             public static final String FIELD_NICKNAME = "nickname";
             public static final String FIELD_AVATAR = "avatar";

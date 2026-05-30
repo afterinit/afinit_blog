@@ -1,7 +1,9 @@
 package top.afinit.controller;
 
 
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -54,8 +56,8 @@ public class UserController {
 
 
     @GetMapping("/info")
-    public Result<UserVO> getInfo(){
-        UserVO userVO = userService.getUserInfo();
+    public Result<UserVO> getInfoByToken(){
+        UserVO userVO = userService.getUserInfoByToken();
         return Result.success(UserResultCode.GET_USER_OK,userVO);
     }
 
@@ -97,6 +99,15 @@ public class UserController {
     public Result<UserVO> updateUserInfo(@RequestBody @Validated UserUpdateInfoDTO userUpdateInfoDTO){
         UserVO userVO = userService.updateUserInfo(userUpdateInfoDTO);
         return Result.success(UserResultCode.UPDATE_USER_OK,userVO);
+    }
+
+    @DeleteMapping("{id}")
+    public Result<Void> deleteUserByToken(@PathVariable
+                                              @NotNull(message = "id不能为空")
+                                              @Min(value = 1, message = "用户ID格式不合法")
+                                              Long id){
+        userService.deleteUserById(id);
+        return Result.success(UserResultCode.DELETE_USER_OK);
     }
 
 

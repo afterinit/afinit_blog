@@ -118,14 +118,4 @@ public class BlogController {
         return Result.success(BlogResultCode.GET_OK,blogVOIPage);
     }
 
-    @PutMapping("/toPublic/{id}")
-    public Result<Void> toPublicBlog(@PathVariable
-                                         @NotNull(message = "id不能为空")
-                                         @Min(value = 1,message = "文章ID格式不合法")
-                                         Long id){
-        blogService.publicBlog(id);
-        return Result.success(BlogResultCode.UPDATE_OK);
-    }
-
-
 }

@@ -6,14 +6,6 @@ import top.afinit.common.constant.RedisConstants;
 
 public class RedisKeyUtil {
     /**
-     * 验证码 Key：只负责接收 userId 拼接
-     */
-    public static String getVerificationCodeKey(String to) {
-        String key = SecureUtil.md5(to);
-        return RedisConstants.Code.VERIFICATION_CODE + key;
-    }
-
-    /**
      * Access Token Key：传入明文 token，内部自动做 MD5 加密并拼接
      */
     public static String getAccessKey(String accessToken) {
@@ -28,8 +20,27 @@ public class RedisKeyUtil {
         return RedisConstants.User.REFRESH_TOKEN_KEY + userId + StrUtil.COLON + clientType;
     }
 
+
+    /**
+     * 验证码 Key：只负责接收 userId 拼接
+     */
+    public static String getVerificationCodeKey(String to) {
+        String key = SecureUtil.md5(to);
+        return RedisConstants.Code.VERIFICATION_CODE + key;
+    }
+
+    /**
+     * 验证码锁Key
+     */
     public static String getVerificationCodeLockKey(String to) {
         String key = SecureUtil.md5(to);
         return RedisConstants.Code.DEADLINE_CODE + key ;
+    }
+
+    /**
+     * accessToken与userId的映射关系的Key
+     */
+    public static String getUserIdToAccessTokenKey(String userId){
+        return RedisConstants.User.MAPPING_TOKEN_KEY+userId;
     }
 }

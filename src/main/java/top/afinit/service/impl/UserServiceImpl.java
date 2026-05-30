@@ -8,8 +8,9 @@ import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.crypto.SecureUtil;
 import cn.hutool.crypto.digest.BCrypt;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import top.afinit.common.util.RedisKeyUtil;
@@ -45,7 +46,6 @@ public class UserServiceImpl implements UserService {
     private final JwtService jwtService;
 
     private final CaptchaService captchaService;
-    private final StringRedisTemplate stringRedisTemplate;
 
 
     @Override
@@ -64,6 +64,11 @@ public class UserServiceImpl implements UserService {
             throw new BusinessException(UserResultCode.USER_NOT_EXIST);
         }
 
+        //查看是否被冻结
+        if(user.getStatus()!=1){
+            throw new BusinessException(UserResultCode.USER_ACCOUNT_LOCKED);
+        }
+
         String inputPassword = userLoginDTO.getPassword();
 
         //数据库密码
@@ -75,8 +80,9 @@ public class UserServiceImpl implements UserService {
         }
 
 
+        String userId = String.valueOf(user.getId());
         //创建accessToken
-        String accessToken = jwtService.createToken(user.getId(), RedisConstants.User.ACCESS_TOKEN_MS_TTL);
+        String accessToken = jwtService.createToken(userId, RedisConstants.User.ACCESS_TOKEN_MS_TTL);
 
         //将user转为适合存储的UserContextDTO
         UserContextDTO userContextDTO = BeanUtil.copyProperties(user, UserContextDTO.class);
@@ -97,10 +103,10 @@ public class UserServiceImpl implements UserService {
                 RedisConstants.User.ACCESS_TOKEN_UNIT);
 
         //创建refreshToken
-        String refreshToken = jwtService.createToken(user.getId(), RedisConstants.User.REFRESH_TOKEN_MS_TTL);
+        String refreshToken = jwtService.createToken(userId, RedisConstants.User.REFRESH_TOKEN_MS_TTL);
 
         //获取refreshToken的key
-        String refreshKey = RedisKeyUtil.getRefreshKey(refreshToken, clientType);
+        String refreshKey = RedisKeyUtil.getRefreshKey(userId, clientType);
 
         //使用md5加密得到值
         String refreshValue = SecureUtil.md5(refreshToken);
@@ -110,6 +116,14 @@ public class UserServiceImpl implements UserService {
                 refreshValue,
                 RedisConstants.User.REFRESH_TOKEN_TTL,
                 RedisConstants.User.REFRESH_TOKEN_UNIT);
+
+
+        //将映射存入redis
+        String userIdToAccessTokenKey = RedisKeyUtil.getUserIdToAccessTokenKey(userId);
+        redisService.saveTokenByStr(userIdToAccessTokenKey,
+                accessToken,
+                RedisConstants.User.MAPPING_TOKEN_TTL,
+                RedisConstants.User.MAPPING_TOKEN_UNIT);
 
 
         return LoginTokenVO.builder()
@@ -147,15 +161,19 @@ public class UserServiceImpl implements UserService {
         userDao.insert(user);
 
         //删除redis存储的验证码
-        stringRedisTemplate.delete(RedisKeyUtil.getVerificationCodeKey(to));
+        String verificationCodeKey = RedisKeyUtil.getVerificationCodeKey(to);
+        redisService.rmRedis(verificationCodeKey);
 
     }
 
     @Override
     public LoginTokenVO refreshToken(String refreshToken,String clientType) {
 
+
+        String userId = jwtService.parseToken(refreshToken);
+
         //获取存储在redis的refreshToken的值
-        String refreshKey = RedisKeyUtil.getRefreshKey(refreshToken, clientType);
+        String refreshKey = RedisKeyUtil.getRefreshKey(userId, clientType);
         String oldValue = redisService.getTokenStr(refreshKey);
 
         //通过refreshToken获取新accessToken
@@ -165,7 +183,6 @@ public class UserServiceImpl implements UserService {
         String accessKey = RedisKeyUtil.getAccessKey(newAccessToken);
 
         //从数据库获取最新数据
-        String userId = jwtService.parseToken(refreshToken);
         User user = userDao.selectById(userId);
         UserContextDTO userContextDTO = BeanUtil.copyProperties(user, UserContextDTO.class);
 
@@ -174,10 +191,19 @@ public class UserServiceImpl implements UserService {
 
         Map<String, Object> userMap = BeanUtil.beanToMap(userContextDTO);
 
+        String userIdToAccessTokenKey = RedisKeyUtil.getUserIdToAccessTokenKey(userId);
+
 
         //将accessToken存储到redis
-        redisService.saveTokenByHash(accessKey,userMap,RedisConstants.User.ACCESS_TOKEN_TTL,RedisConstants.User.ACCESS_TOKEN_UNIT);
+        redisService.saveTokenByHash(accessKey,
+                userMap,
+                RedisConstants.User.ACCESS_TOKEN_TTL,
+                RedisConstants.User.ACCESS_TOKEN_UNIT);
 
+        redisService.saveTokenByStr(userIdToAccessTokenKey,
+                newAccessToken,
+                RedisConstants.User.MAPPING_TOKEN_TTL,
+                RedisConstants.User.MAPPING_TOKEN_UNIT);
 
         return LoginTokenVO.builder()
                 .accessToken(newAccessToken)
@@ -234,11 +260,12 @@ public class UserServiceImpl implements UserService {
 
 
     @Override
-    public UserVO getUserInfo() {
+    public UserVO getUserInfoByToken() {
         UserContextDTO userContextDTO = UserHolder.getUser();
         if(ObjectUtil.isEmpty(userContextDTO)){
             throw new BusinessException(UserResultCode.USER_NOT_EXIST);
         }
+
         UserHolder.judgmentAuth(userContextDTO.getId());
 
         return BeanUtil.copyProperties(userContextDTO, UserVO.class);
@@ -335,9 +362,80 @@ public class UserServiceImpl implements UserService {
 
         userDao.updateById(user);
 
-        stringRedisTemplate.delete(RedisKeyUtil.getVerificationCodeKey(to));
+        String verificationCodeKey = RedisKeyUtil.getVerificationCodeKey(to);
+        redisService.rmRedis(verificationCodeKey);
         return BeanUtil.copyProperties(user, UserVO.class);
 
+    }
+
+    @Override
+    public IPage<UserVO> getUserInfo(Long page, Long size) {
+
+        boolean isAdmin = UserHolder.isAdmin();
+        if(!isAdmin){
+            throw new BusinessException(UserResultCode.AUTH_PERMISSION_DENIED);
+        }
+
+        LambdaQueryWrapper<User> wrapper = new LambdaQueryWrapper<>();
+        wrapper.orderByDesc(User::getCreateTime);
+
+        Page<User> userIPage = new Page<>(page, size);
+        Page<User> userPage = userDao.selectPage(userIPage, wrapper);
+
+        return userPage.convert(user -> {
+            UserVO userVO = new UserVO();
+            BeanUtil.copyProperties(user,userVO);
+            return userVO;
+        });
+    }
+
+    @Override
+    public void deleteUserById(Long id) {
+        UserContextDTO userContextDTO = UserHolder.getUser();
+
+        if(ObjectUtil.isEmpty(userContextDTO)){
+            throw new BusinessException(UserResultCode.AUTH_TOKEN_MISSING);
+        }
+
+        UserHolder.judgmentAuth(id);
+
+        //redis删除
+
+        rmRedis(id);
+
+        //数据库删除
+        userDao.deleteById(id);
+
+    }
+
+    @Override
+    public void blockUserById(Long id, Integer status) {
+        boolean isAdmin = UserHolder.isAdmin();
+        if(!isAdmin){
+            throw new BusinessException(UserResultCode.AUTH_PERMISSION_DENIED);
+        }
+
+        User user = new User();
+        user.setId(id);
+        user.setStatus(status);
+
+        userDao.updateById(user);
+        rmRedis(id);
+    }
+
+
+    private void rmRedis(Long id){
+        String idStr = String.valueOf(id);
+        String userIdToAccessTokenKey = RedisKeyUtil.getUserIdToAccessTokenKey(idStr);
+        String accessToken = redisService.getTokenStr(userIdToAccessTokenKey);
+        String accessKey = RedisKeyUtil.getAccessKey(accessToken);
+        String refreshKeyWeb = RedisKeyUtil.getRefreshKey(idStr, "web");
+        String refreshKeyApp = RedisKeyUtil.getRefreshKey(idStr, "app");
+
+        redisService.rmRedis(accessKey);
+        redisService.rmRedis(refreshKeyWeb);
+        redisService.rmRedis(refreshKeyApp);
+        redisService.rmRedis(userIdToAccessTokenKey);
     }
 
 

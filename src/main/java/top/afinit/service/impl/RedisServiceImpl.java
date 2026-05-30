@@ -3,13 +3,11 @@ package top.afinit.service.impl;
 import cn.hutool.core.convert.Convert;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
-import cn.hutool.crypto.SecureUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import top.afinit.common.util.RedisKeyUtil;
 import top.afinit.common.util.UserHolder;
-import top.afinit.common.constant.RedisConstants;
 import top.afinit.domain.dto.UserContextDTO;
 import top.afinit.service.RedisService;
 
@@ -52,17 +50,10 @@ public class RedisServiceImpl implements RedisService {
     }
 
     @Override
-    public void rmAccessRedis() {
-        UserContextDTO userContextDTO = UserHolder.getUser();
+    public void rmRedis(String key) {
 
-        if(ObjectUtil.isEmpty(userContextDTO)||StrUtil.isBlank(userContextDTO.getAccessToken())){
-            return;
-        }
+        stringRedisTemplate.delete(key);
 
-        String accessToken = userContextDTO.getAccessToken();
-        String accessTokenMd5 = SecureUtil.md5(accessToken);
-        String accessTokenKey = RedisConstants.User.ACCESS_TOKEN_KEY + accessTokenMd5;
-        stringRedisTemplate.delete(accessTokenKey);
     }
 
     @Override

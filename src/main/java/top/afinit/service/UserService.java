@@ -1,5 +1,6 @@
 package top.afinit.service;
 
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import org.springframework.web.multipart.MultipartFile;
 import top.afinit.domain.dto.*;
 import top.afinit.domain.vo.LoginTokenVO;
@@ -27,7 +28,7 @@ public interface UserService {
     UserContextDTO getById(Long userId);
 
     //通过Thread获取用户信息视图
-    UserVO getUserInfo();
+    UserVO getUserInfoByToken();
 
     //更新用户信息
     String updateUserNickname(UserUpdateNicknameDTO userUpdateNicknameDTO);
@@ -35,6 +36,17 @@ public interface UserService {
     //更新用户头像
     String updateAvatar(MultipartFile file);
 
-
+    //更新敏感用户信息
     UserVO updateUserInfo(UserUpdateInfoDTO userUpdateInfoDTO);
+
+    //按页查询用户信息
+    IPage<UserVO> getUserInfo(Long page,  Long size);
+
+    //通过id删除用户
+    void deleteUserById(Long id);
+
+    //通过id停用/启用用户
+    void blockUserById(Long id, Integer status);
+
+
 }

@@ -24,12 +24,12 @@ public class JwtServiceImpl implements JwtService {
         this.key = Keys.hmacShaKeyFor(jwtProperties.getSecret().getBytes(StandardCharsets.UTF_8));
     }
 
-    public String createToken(Long id, Long time) {
+    public String createToken(String id, Long time) {
         Date now = new Date();
         Date expiryDate = new Date(now.getTime() + time);
 
         return Jwts.builder()
-                .setSubject(String.valueOf(id))
+                .setSubject(id)
                 .setIssuedAt(now)
                 .setExpiration(expiryDate)
                 .signWith(key)
@@ -54,14 +54,13 @@ public class JwtServiceImpl implements JwtService {
         }
 
         //通过refreshToken获取值用户id
-        String usrIdStr = parseToken(refreshToken);
-        if(StrUtil.isBlank(usrIdStr)){
+        String userId = parseToken(refreshToken);
+        if(StrUtil.isBlank(userId)){
             throw new BusinessException(UserResultCode.AUTH_TOKEN_INVALID);
         }
 
 
 
-        Long userId = Long.valueOf(usrIdStr);
         String value = SecureUtil.md5(refreshToken);
 
         if(StrUtil.isBlank(oldValue)){

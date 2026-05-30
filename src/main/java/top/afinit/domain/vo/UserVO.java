@@ -18,6 +18,11 @@ public class UserVO {
     private Long id;
 
     /**
+     * 用户名
+     */
+    private String username;
+
+    /**
      * 角色 0-普通用户,1-管理员
      */
     private Integer role;
@@ -48,4 +53,9 @@ public class UserVO {
      */
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime updateTime;
+
+    /**
+     * 账号状态 0-停用, 1-正常
+     */
+    private Integer status;
 }

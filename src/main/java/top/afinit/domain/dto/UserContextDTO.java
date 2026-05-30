@@ -37,6 +37,11 @@ public class UserContextDTO implements Serializable {
     private String avatar;
 
     /**
+     * 状态
+     */
+    private Integer status;
+
+    /**
      * 邮箱
      */
     private String email;
