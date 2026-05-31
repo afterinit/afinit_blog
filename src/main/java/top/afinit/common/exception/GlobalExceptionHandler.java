@@ -2,6 +2,7 @@ package top.afinit.common.exception;
 
 
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
 import jakarta.validation.constraints.NotNull;
@@ -14,23 +15,31 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 import top.afinit.common.result.CommonResultCode;
 import top.afinit.common.result.Result;
+import top.afinit.common.result.UserResultCode;
 
 
 @Slf4j // 自动注入日志对象
 @RestControllerAdvice
-public class GlobalExceptionHandler{
+public class GlobalExceptionHandler {
 
 
     /**
      * 捕获自定义业务异常
      */
     @ExceptionHandler(BusinessException.class)
-    public Result<Void> handleBusinessException(BusinessException e, HttpServletRequest request) {
+    public Result<Void> handleBusinessException(BusinessException e,
+                                                HttpServletRequest request,
+                                                HttpServletResponse response) {
         log.warn("[业务异常][{} -> {}] 错误码: {}, 原因: {}",
                 request.getMethod(),
                 request.getRequestURI(),
                 e.getResultCode().getCode(),
                 e.getMessage());
+
+        // 精准匹配：如果是 Token 过期或其他认证相关的错误码，强制设为 401 状态码
+        if (UserResultCode.AUTH_TOKEN_EXPIRED.equals(e.getResultCode())) {
+            response.setStatus(jakarta.servlet.http.HttpServletResponse.SC_UNAUTHORIZED);
+        }
 
         return Result.error(e.getResultCode());
     }
@@ -57,7 +66,7 @@ public class GlobalExceptionHandler{
     }
 
     /**
-     *  捕获 404 路由找不到异常
+     * 捕获 404 路由找不到异常
      */
     @ExceptionHandler(NoResourceFoundException.class)
     public Result<Void> handleNoResourceFoundException(NoResourceFoundException e) {
@@ -84,7 +93,6 @@ public class GlobalExceptionHandler{
     }
 
 
-
     /**
      * 捕获系统未知异常
      */
@@ -102,7 +110,6 @@ public class GlobalExceptionHandler{
 
         return Result.error(CommonResultCode.SYSTEM_UNKNOWN_ERR);
     }
-
 
 
 }

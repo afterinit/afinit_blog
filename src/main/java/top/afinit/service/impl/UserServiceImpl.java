@@ -80,7 +80,15 @@ public class UserServiceImpl implements UserService {
         }
 
 
+
         String userId = String.valueOf(user.getId());
+
+        //删除原先的accessToken
+        String userIdToAccessTokenKey = RedisKeyUtil.getUserIdToAccessTokenKey(userId);
+        String oldAccessToken = redisService.getTokenStr(userIdToAccessTokenKey);
+        String oldAccessKey = RedisKeyUtil.getAccessKey(oldAccessToken);
+        redisService.rmRedis(oldAccessKey);
+
         //创建accessToken
         String accessToken = jwtService.createToken(userId, RedisConstants.User.ACCESS_TOKEN_MS_TTL);
 
@@ -119,7 +127,6 @@ public class UserServiceImpl implements UserService {
 
 
         //将映射存入redis
-        String userIdToAccessTokenKey = RedisKeyUtil.getUserIdToAccessTokenKey(userId);
         redisService.saveTokenByStr(userIdToAccessTokenKey,
                 accessToken,
                 RedisConstants.User.MAPPING_TOKEN_TTL,
