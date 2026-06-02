@@ -17,7 +17,6 @@ public class UserLoginDTO {
     @Size(max = 50, message = "用户名长度不能超过50个字符")
     private String username;
 
-
     /**
      * 密码
      */
@@ -30,6 +29,4 @@ public class UserLoginDTO {
      */
     @NotBlank(message = "未进行人机验证")
     private String cfToken;
-
-
 }

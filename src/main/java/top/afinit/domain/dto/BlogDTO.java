@@ -11,7 +11,6 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor  // 自动生成无参构造
 public class BlogDTO {
 
-
     private Long id;
 
     /**

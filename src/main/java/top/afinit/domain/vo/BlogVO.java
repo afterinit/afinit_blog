@@ -61,6 +61,4 @@ public class BlogVO {
      */
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime updateTime;
-
-
 }

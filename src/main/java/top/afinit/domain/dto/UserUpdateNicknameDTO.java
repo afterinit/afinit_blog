@@ -16,5 +16,4 @@ public class UserUpdateNicknameDTO {
     @NotBlank(message = "昵称不能为空")
     @Size(max = 20, message = "昵称长度不能超过20个字符")
     private String nickname;
-
 }

@@ -11,7 +11,6 @@ import lombok.NoArgsConstructor;
 public class UserUpdateInfoDTO {
 
     private String username;
-
     private String password;
 
     /**

@@ -5,4 +5,10 @@ public class AuthConstants {
     public static final String REFRESH_HEADER = "X-Refresh-Token";
     public static final String CLIENT_TYPE = "X-Client-Type";
 
+    public static class Param {
+        public static final String WEB = "web";
+        public static final String APP = "app";
+
+    }
+
 }

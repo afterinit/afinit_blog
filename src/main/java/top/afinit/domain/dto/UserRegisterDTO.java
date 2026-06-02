@@ -15,14 +15,12 @@ public class UserRegisterDTO {
     @Size(max = 50, message = "用户名长度不能超过50个字符")
     private String username;
 
-
     /**
      * 密码
      */
     @NotBlank(message = "密码不能为空")
     @Size(min = 64, max = 64, message = "数据传输异常，密码安全校验未通过")
     private String password;
-
 
     /**
      * 邮箱
@@ -39,6 +37,4 @@ public class UserRegisterDTO {
     @NotBlank(message = "验证码不能为空")
     @Size(min = 6, max = 6, message = "验证码必须为6位数字")
     private String code;
-
-
 }

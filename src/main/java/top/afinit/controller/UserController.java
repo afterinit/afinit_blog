@@ -38,7 +38,10 @@ public class UserController {
      */
     @PostMapping("/login")
     public Result<LoginTokenVO> login(@RequestBody @Validated UserLoginDTO userLoginDTO,
-                                      @RequestHeader(value = AuthConstants.CLIENT_TYPE, required = false, defaultValue = "web") String clientType){
+                                      @RequestHeader(value = AuthConstants.CLIENT_TYPE,
+                                              required = false,
+                                              defaultValue = AuthConstants.Param.WEB)
+                                      String clientType){
         LoginTokenVO loginTokenVO = userService.login(userLoginDTO,clientType);
         return Result.success(UserResultCode.USER_LOGIN_OK,loginTokenVO);
     }
@@ -47,7 +50,9 @@ public class UserController {
     public Result<LoginTokenVO> refresh(@RequestHeader(value = AuthConstants.REFRESH_HEADER,required = false)
                                             @NotBlank(message = "Token不能为空")
                                             String refreshToken,
-                                        @RequestHeader(value = AuthConstants.CLIENT_TYPE, required = false, defaultValue = "web")
+                                        @RequestHeader(value = AuthConstants.CLIENT_TYPE,
+                                                required = false,
+                                                defaultValue = AuthConstants.Param.WEB)
                                             String clientType){
         LoginTokenVO loginTokenVO = userService.refreshToken(refreshToken,clientType);
         return Result.success(UserResultCode.AUTH_REFRESH_OK,loginTokenVO);
@@ -78,8 +83,8 @@ public class UserController {
         return Result.success(UserResultCode.UPDATE_USER_OK,avatarUrl);
     }
 
-    @PostMapping("/registercode")
-    public Result<Void> getRegisterCode(@RequestBody @Validated SendCodeDTO sendCodeDTO){
+    @PostMapping("/code")
+    public Result<Void> getCodeByEmail(@RequestBody @Validated SendCodeDTO sendCodeDTO){
         mailService.sendVerificationCode(sendCodeDTO, MailConstants.SIGN_UP_PRE);
         return Result.success(UserResultCode.SEND_CODE_OK);
     }

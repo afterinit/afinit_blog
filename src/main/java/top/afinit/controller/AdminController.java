@@ -59,7 +59,7 @@ public class AdminController {
     @PutMapping("{id}")
     public Result<Void> blackUser(@PathVariable
                                       @NotNull(message = "id不能为空")
-                                      @Min(value = 1,message = "文章ID格式不合法")
+                                      @Min(value = 1,message = "用户ID格式不合法")
                                       Long id,
                                   @RequestParam
                                   @NotNull(message = "状态不能为空")

@@ -72,6 +72,4 @@ public class Blog {
     @TableLogic
     @TableField("is_delete")
     private Integer deleted;
-
-
 }

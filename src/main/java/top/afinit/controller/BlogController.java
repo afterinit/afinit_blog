@@ -49,7 +49,7 @@ public class BlogController {
      * @return 统一返回体包裹的博客id
      */
     @PostMapping
-    public Result<Long> save(@RequestBody @Validated BlogDTO blogDTO){
+    public Result<Long> saveBlog(@RequestBody @Validated BlogDTO blogDTO){
         Long id= blogService.save(blogDTO);
         return Result.success(BlogResultCode.SAVE_OK,id);
 
@@ -75,7 +75,7 @@ public class BlogController {
      * @return 统一返回体包裹的code信息
      */
     @DeleteMapping("/{id}")
-    public Result<Void> delete(@PathVariable
+    public Result<Void> deleteBlog(@PathVariable
                                    @NotNull(message = "id不能为空")
                                    @Min(value = 1, message = "文章ID格式不合法")
                                    Long id){
@@ -93,15 +93,13 @@ public class BlogController {
                                       @NotNull(message = "id不能为空")
                                       @Min(value = 1,message = "文章ID格式不合法")
                                       Long id){
-
         BlogVO blogVO = blogService.getPublicById(id);
-
         return Result.success(BlogResultCode.GET_OK,blogVO);
     }
 
 
     @GetMapping("/private/{id}")
-    public Result<BlogVO> getPrivate(@PathVariable
+    public Result<BlogVO> getPrivateById(@PathVariable
                                          @NotNull(message = "id不能为空")
                                          @Min(value = 1,message = "文章ID格式不合法")
                                          Long id){
