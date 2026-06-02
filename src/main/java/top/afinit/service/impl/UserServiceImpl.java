@@ -13,6 +13,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+import top.afinit.common.constant.AuthConstants;
 import top.afinit.common.util.RedisKeyUtil;
 import top.afinit.common.util.UserHolder;
 import top.afinit.common.constant.RedisConstants;
@@ -436,8 +437,8 @@ public class UserServiceImpl implements UserService {
         String userIdToAccessTokenKey = RedisKeyUtil.getUserIdToAccessTokenKey(idStr);
         String accessToken = redisService.getTokenStr(userIdToAccessTokenKey);
         String accessKey = RedisKeyUtil.getAccessKey(accessToken);
-        String refreshKeyWeb = RedisKeyUtil.getRefreshKey(idStr, "web");
-        String refreshKeyApp = RedisKeyUtil.getRefreshKey(idStr, "app");
+        String refreshKeyWeb = RedisKeyUtil.getRefreshKey(idStr, AuthConstants.Param.WEB);
+        String refreshKeyApp = RedisKeyUtil.getRefreshKey(idStr, AuthConstants.Param.APP);
 
         redisService.rmRedis(accessKey);
         redisService.rmRedis(refreshKeyWeb);
