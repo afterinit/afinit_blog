@@ -112,7 +112,7 @@
 
   1. 电脑登录qq邮箱网页版
   2. 进入设置，账号与安全
-     ![image-20260602131558257](README.assets/image-20260602131558257.png)
+     ![image-20260602131558257](https://img.afinit.top/image/image-20260602131558257.png)
 
   3. 点击开启服务，生成SMTP授权码
 
@@ -169,7 +169,7 @@
 
   2. 点击应用程序安全 -> Turnstile -> 添加小组件
 
-     ![image-20260602123020511](README.assets/image-20260602123020511.png)
+     ![image-20260602123020511](https://img.afinit.top/image/image-20260602123020511.png)
 
   3. 参数设置
 
@@ -177,7 +177,7 @@
 
      主机名管理：添加自己的服务器（方便服务器部署）或本机localhost（方便本地测试环境），也可两个都填
 
-     ![image-20260602123519938](README.assets/image-20260602123519938.png)
+     ![image-20260602123519938](https://img.afinit.top/image/image-20260602123519938.png)
 
   4. 点击创建
   5. 得到站点密钥和密钥
@@ -207,7 +207,7 @@
 
   2. 点击存储和数据库 -> R2对象存储 -> 概述 ->创建存储桶
 
-     ![image-20260602124506757](README.assets/image-20260602124506757.png)
+     ![image-20260602124506757](https://img.afinit.top/image/image-20260602124506757.png)
 
   3. 设置存储桶名称，点击创建存储桶
 
@@ -221,18 +221,18 @@
        得到公共开发URL
 
   5. 等待初始化完成即可在对象看到公共访问已启用
-     ![image-20260602125302751](README.assets/image-20260602125302751.png)
+     ![image-20260602125302751](https://img.afinit.top/image/image-20260602125302751.png)
 
   6. 获取相关密钥
      退出到R2对象存储，在账户详情点击管理
-     ![image-20260602125701229](README.assets/image-20260602125701229.png)
+     ![image-20260602125701229](https://img.afinit.top/image/image-20260602125701229.png)
 
      点击创建Account API令牌
 
      设置令牌名称，根据自己的喜好来，**权限选择对象读和写**（重要！！！）
      然后创建Account API令牌
 
-     ![image-20260602125920410](README.assets/image-20260602125920410.png)
+     ![image-20260602125920410](https://img.afinit.top/image/image-20260602125920410.png)
 
   7. 保存内容
      建议先保存整页内容后再进行选择填写，关闭页面后不可见
