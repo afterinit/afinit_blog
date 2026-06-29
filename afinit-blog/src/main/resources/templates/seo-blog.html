@@ -1,0 +1,12 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title th:text="${blog.title} + ' - Afinit Blog'"></title>
+    <meta name="description" th:content="${blog.summary}">
+</head>
+<body>
+<h1 th:text="${blog.title}"></h1>
+<div th:utext="${blog.content}"></div>
+</body>
+</html>

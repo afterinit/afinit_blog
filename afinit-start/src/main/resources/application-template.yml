@@ -1,0 +1,85 @@
+server:
+  port: 8080
+
+spring:
+  mvc:
+    async:
+      request-timeout: 600000
+
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/afinit_blog?serverTimezone=UTC
+    username: mysql用户名
+    password: mysql密码
+
+  application:
+    name: shelf
+
+  #最大文件上传限制
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 2MB
+      max-request-size: 5MB
+
+  #qq邮箱SMTP授权
+  mail:
+    host: smtp.qq.com
+    username: your-qq-email@qq.com
+    password: your-smtp-password
+    default-encoding: UTF-8
+    properties:
+      mail:
+        smtp:
+          auth: true
+          ssl:
+            enable: true
+
+
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      password: your-redis-password
+      database: 0
+      timeout: 5s
+      lettuce:
+        pool:
+          max-active: 8
+          max-idle: 8
+          min-idle: 0
+          max-wait: -1ms
+
+jwt:
+  secret: your-jwt-secret-key-replace-me
+  expiration: 18000000
+  token-type: Bearer
+  header: Authorization
+
+# 第三方服务配置
+#Cloudflare人机验证
+cloudflare:
+  turnstile:
+    # 校验接口完整URL
+    verify-url: https://challenges.cloudflare.com/turnstile/v0/siteverify
+    # SecretKey
+    secret-key: your-turnstile-secret-key
+
+  #文字合法性检验
+  ai:
+    account-id: your_account_id
+    api-token: your_api_token
+    url: https://api.cloudflare.com/client/v4/accounts/${cloudflare.ai.account-id}/ai/run/@cf/meta/llama-guard-3-8b
+
+#Cloudflare R2
+r2:
+  access-key: your-r2-access-key
+  secret-key: your-r2-secret-key
+  endpoint: https://your-account-id.eu.r2.cloudflarestorage.com
+  bucket-name: your-bucket-name
+  public-domain: https://your-public-domain
+
+#ai提示词
+ai:
+  prompts:
+    safety-audit-path: classpath:prompts/safety_audit.txt

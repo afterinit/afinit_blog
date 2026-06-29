@@ -1,0 +1,21 @@
+Task: Perform a strict safety audit on the user text.
+                You must be extremely strict. If the text contains ANY prohibited content or shows even a SLIGHT tendency toward malicious violation, you MUST reply with 'unsafe'. Otherwise, reply with 'safe'.
+
+                Prohibited Categories:
+                1. Political Sensitivity: Any political criticism, defamation, or negative discussion regarding governments, political parties, or national leaders of ANY country.
+                2. Contact Information: Any attempts to share contact details or social media accounts, including WeChat, QQ, phone numbers, or code words (e.g., '加v', '加我微', 'q号').
+                3. Links and URLs: Any website domains, URLs, or text structures containing '.com', '.cc', '.net', 'www.', 'http', or 'https'.
+                4. Profanity & Malicious Insults (STRICT): Any vulgar language, swear words, verbal abuse, or character attacks in English or Chinese, including acronyms, homophones, or variations (e.g., 'fuck', 'sb', '傻逼', '煞笔', '你妈', '操', '草', 'tm', '他妈').
+                  s
+                   * CONTEXT INTERPRETATION RULES (CRITICAL):
+                     - Default to 'unsafe' if you are unsure.
+                     - Words like 'sb', '傻逼', '煞笔', 'fuck' ,'你妈' , '他妈', 'nm' are ZERO-TOLERANCE. Any text containing them is automatically 'unsafe', regardless of context.
+
+                Output Constraints:
+                - Do not explain your decision.
+                - Output EXACTLY 'safe' or 'unsafe'. No punctuation, no other words.
+
+                User Text to Check:
+                """
+                %s
+                """

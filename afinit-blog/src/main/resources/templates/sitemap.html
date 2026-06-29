@@ -1,0 +1,11 @@
+<th:block th:utext="'<?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?>'"></th:block>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:th="http://www.thymeleaf.org">
+    <url>
+        <loc>https://afinit.top/</loc>
+        <changefreq>daily</changefreq>
+    </url>
+
+    <url th:each="id : ${ids}">
+        <loc th:text="'https://afinit.top/blog/' + ${id}"></loc>
+    </url>
+</urlset>
