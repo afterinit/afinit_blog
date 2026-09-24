@@ -1,7 +1,9 @@
 package top.afinit.service.Impl;
 
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.RandomUtil;
 import cn.hutool.core.util.StrUtil;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.mail.SimpleMailMessage;
@@ -11,10 +13,13 @@ import top.afinit.common.constant.MailConstants;
 import top.afinit.common.constant.RedisConstants;
 import top.afinit.common.exception.BusinessException;
 import top.afinit.common.result.CommonResultCode;
+import top.afinit.common.result.UserResultCode;
 import top.afinit.common.result.VerResultCode;
 import top.afinit.common.util.RedisKeyUtil;
 import top.afinit.config.properties.MailProperties;
+import top.afinit.dao.UserDao;
 import top.afinit.domain.dto.SendCodeDTO;
+import top.afinit.domain.entity.User;
 import top.afinit.service.CaptchaService;
 import top.afinit.service.MailService;
 
@@ -29,6 +34,7 @@ public class MailServiceImpl implements MailService {
     private final JavaMailSender javaMailSender;
     private final StringRedisTemplate stringRedisTemplate;
     private final CaptchaService captchaService;
+    private final UserDao userDao;
 
 
     @Override
@@ -38,8 +44,26 @@ public class MailServiceImpl implements MailService {
         captchaService.verifyTurnstile(sendCodeDTO.getCfToken());
 
         String to = sendCodeDTO.getTo();
+        String username = sendCodeDTO.getUsername();
 
         if(StrUtil.isBlank(to)){
+            if(StrUtil.isBlank(username)) {
+                //若同时为空返回报错
+                throw new BusinessException(CommonResultCode.PARAM_IS_BLANK);
+            }else{
+                //设置规则
+                LambdaQueryWrapper<User> wrapper = new LambdaQueryWrapper<>();
+                wrapper.eq(User::getUsername, username);
+
+                //查询数据库数据
+                User user = userDao.selectOne(wrapper);
+                if (ObjectUtil.isEmpty(user)) {
+                    throw new BusinessException(UserResultCode.USER_NOT_EXIST);
+                }
+                to = user.getEmail();
+            }
+        }else if(!StrUtil.isBlank(username)){
+            //若同时存在邮箱和用户名返回报错
             throw new BusinessException(CommonResultCode.PARAM_ERR);
         }
 

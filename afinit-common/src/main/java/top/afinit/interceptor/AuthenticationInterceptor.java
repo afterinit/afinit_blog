@@ -55,7 +55,10 @@ public class AuthenticationInterceptor implements HandlerInterceptor {
 
         String uri = request.getRequestURI();
         String method = request.getMethod();
-        if (uri.startsWith("/blog") && !uri.startsWith("/blog/private") && HttpMethod.GET.matches(method)) {
+        if (uri.startsWith("/blog")
+                && !uri.startsWith("/blog/private")
+                && !uri.startsWith("/blog/personal")
+                && HttpMethod.GET.matches(method)) {
             return true;
         }
 

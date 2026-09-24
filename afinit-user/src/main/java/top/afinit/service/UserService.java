@@ -6,6 +6,7 @@ import top.afinit.domain.dto.UserLoginDTO;
 import top.afinit.domain.dto.UserRegisterDTO;
 import top.afinit.domain.dto.UserUpdateInfoDTO;
 import top.afinit.domain.dto.UserUpdateNicknameDTO;
+import top.afinit.domain.entity.User;
 import top.afinit.domain.vo.LoginTokenVO;
 import top.afinit.domain.vo.UserNicknameVO;
 import top.afinit.domain.vo.UserVO;
@@ -30,7 +31,7 @@ public interface UserService {
     //通过Thread获取用户信息视图
     UserVO getUserInfoByToken();
 
-    //更新用户信息
+    //更新用户昵称
     String updateUserNickname(UserUpdateNicknameDTO userUpdateNicknameDTO);
 
     //更新用户头像
@@ -39,8 +40,14 @@ public interface UserService {
     //更新敏感用户信息
     UserVO updateUserInfo(UserUpdateInfoDTO userUpdateInfoDTO);
 
+    //找回密码
+    void updateUserPassword(UserUpdateInfoDTO userUpdateInfoDTO);
+
     //按页查询用户信息
     IPage<UserVO> getUserInfo(Long page,  Long size);
+
+    //通过用户名获取用户详细信息
+    User getUserByUsername(String username);
 
     //通过id删除用户
     void deleteUserById(Long id);

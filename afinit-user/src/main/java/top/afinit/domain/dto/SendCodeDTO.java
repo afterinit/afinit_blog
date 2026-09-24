@@ -21,6 +21,11 @@ public class SendCodeDTO implements Serializable {
     @NotBlank(message = "未进行人机验证")
     private String cfToken;
 
+    /**
+     * 用户名
+     */
+    private String username;
+
 
     // 使用严格的正则表达式，只允许标准邮箱格式，任何换行符、控制符、敏感特殊符号直接被拦截
     @Pattern(

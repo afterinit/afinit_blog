@@ -115,4 +115,10 @@ public class BlogController {
         return Result.success(BlogResultCode.GET_OK,blogVOIPage);
     }
 
+    @GetMapping("/personal")
+    public Result<IPage<BlogVO>> getPersonalByPage(@RequestParam(defaultValue = "1")  Long page,
+                                                  @RequestParam(defaultValue = "10") @Max(10) Long size){
+        IPage<BlogVO> blogVOIPage = blogService.getPersonalByPage(page,size);
+        return Result.success(BlogResultCode.GET_OK,blogVOIPage);
+    }
 }

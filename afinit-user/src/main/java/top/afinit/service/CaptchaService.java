@@ -1,5 +1,6 @@
 package top.afinit.service;
 
+//验证服务
 public interface CaptchaService {
     //人机验证
     void verifyTurnstile(String token);

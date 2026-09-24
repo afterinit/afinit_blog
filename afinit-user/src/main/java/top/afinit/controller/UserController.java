@@ -81,6 +81,11 @@ public class UserController {
         return Result.success(UserResultCode.UPDATE_USER_OK,avatarUrl);
     }
 
+    /**
+     * 发送验证码
+     * @param sendCodeDTO 包含人机验证token和收件人
+     * @return 统一返回体
+     */
     @PostMapping("/code")
     public Result<Void> getCodeByEmail(@RequestBody @Validated SendCodeDTO sendCodeDTO){
         mailService.sendVerificationCode(sendCodeDTO, MailConstants.SIGN_UP_PRE);
@@ -98,12 +103,33 @@ public class UserController {
         return Result.success(UserResultCode.USER_REGISTER_OK);
     }
 
+    /**
+     * 更新用户敏感信息
+     * @param userUpdateInfoDTO 用户名，新密码，邮箱，验证码
+     * @return 统一返回体包裹的一般用户视图
+     */
     @PutMapping("/info")
     public Result<UserVO> updateUserInfo(@RequestBody @Validated UserUpdateInfoDTO userUpdateInfoDTO){
         UserVO userVO = userService.updateUserInfo(userUpdateInfoDTO);
         return Result.success(UserResultCode.UPDATE_USER_OK,userVO);
     }
 
+    /**
+     * 修改密码
+     * @param userUpdateInfoDTO 用户名，新密码，验证码
+     * @return 统一返回体
+     */
+    @PutMapping("/password")
+    public Result<Void> updateUserPassword(@RequestBody @Validated UserUpdateInfoDTO userUpdateInfoDTO){
+        userService.updateUserPassword(userUpdateInfoDTO);
+        return Result.success(UserResultCode.UPDATE_USER_OK);
+    }
+
+    /**
+     * 通过id删除用户
+     * @param id 用户id
+     * @return 统一返回体
+     */
     @DeleteMapping("{id}")
     public Result<Void> deleteUserByToken(@PathVariable
                                               @NotNull(message = "id不能为空")

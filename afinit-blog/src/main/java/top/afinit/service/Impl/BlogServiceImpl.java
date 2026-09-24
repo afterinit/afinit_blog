@@ -210,4 +210,23 @@ public class BlogServiceImpl implements BlogService {
             return blogVO;
         });
     }
+
+
+    @Override
+    public IPage<BlogVO> getPersonalByPage(Long page, Long size){
+
+        //获取用户id
+        AuthUser authUser = AuthHolder.getUser();
+        Long userId = authUser.getId();
+
+        LambdaQueryWrapper<Blog> wrapper = new LambdaQueryWrapper<>();
+        wrapper.select(Blog.class,fieldInfo -> !fieldInfo.getColumn().equals("content"));
+        wrapper.eq(Blog::getUserId, userId);
+        wrapper.eq(Blog::getDeleted, 0);
+        wrapper.orderByDesc(Blog::getCreateTime);
+
+        Page<Blog> blogIPage = new Page<>(page, size);
+        return getByPage(blogIPage,wrapper);
+    }
+
 }

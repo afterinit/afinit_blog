@@ -36,7 +36,7 @@ public interface BlogService {
     BlogVO getPublicById(Long id);
 
     /**
-     * 分页查询
+     * 分页查询公开的文章
      * @param page 第几页
      * @param size 数量
      * @return IPage<BlogVO>
@@ -45,8 +45,8 @@ public interface BlogService {
 
 
     /**
-     *
-     * @param page 第几页以及数量
+     * 分页查询私密的文章
+     * @param page 第几页
      * @param size 数量
      * @return IPage<BlogVO>
      */
@@ -66,5 +66,17 @@ public interface BlogService {
      */
     void publicBlog(Long id);
 
+    /**
+     * 获取所有公开文章的id
+     * @return list id列表
+     */
     List<Long> getAllPublicBlogIds();
+
+    /**
+     * 获取个人所有文章
+     * @param page 第几页
+     * @param size 数量
+     * @return IPage<BlogVO>
+     */
+    IPage<BlogVO> getPersonalByPage(Long page, Long size);
 }

@@ -33,7 +33,7 @@ public class WebConfig implements WebMvcConfigurer {
                 .excludePathPatterns(
                         "/user/login",
                         "/user/refresh",
-                        "/user/registercode",
+                        "/user/password",
                         "/user/register",
                         "/user/code",
                         "/seo/**"

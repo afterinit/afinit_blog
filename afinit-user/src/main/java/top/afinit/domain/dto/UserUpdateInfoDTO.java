@@ -1,6 +1,8 @@
 package top.afinit.domain.dto;
 
-import jakarta.validation.constraints.NotBlank;
+import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableId;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
@@ -9,6 +11,13 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 public class UserUpdateInfoDTO {
+
+    /**
+     * 主键ID
+     */
+    @TableId(type = IdType.ASSIGN_ID)
+    @JsonFormat(shape = JsonFormat.Shape.STRING)
+    private Long id;
 
     private String username;
     private String password;
@@ -25,7 +34,6 @@ public class UserUpdateInfoDTO {
     /**
      * 邮箱验证码
      */
-    @NotBlank(message = "验证码不能为空")
     @Size(min = 6, max = 6, message = "验证码必须为6位数字")
     private String code;
 }

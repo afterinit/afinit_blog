@@ -5,6 +5,7 @@ import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.convert.Convert;
 import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.core.util.StrUtil;
 import cn.hutool.crypto.SecureUtil;
 import cn.hutool.crypto.digest.BCrypt;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
@@ -24,10 +25,7 @@ import top.afinit.common.result.UserResultCode;
 import top.afinit.common.util.RedisKeyUtil;
 import top.afinit.config.properties.JwtProperties;
 import top.afinit.dao.UserDao;
-import top.afinit.domain.dto.UserLoginDTO;
-import top.afinit.domain.dto.UserRegisterDTO;
-import top.afinit.domain.dto.UserUpdateInfoDTO;
-import top.afinit.domain.dto.UserUpdateNicknameDTO;
+import top.afinit.domain.dto.*;
 import top.afinit.domain.entity.User;
 import top.afinit.domain.vo.LoginTokenVO;
 import top.afinit.domain.vo.UserNicknameVO;
@@ -349,9 +347,17 @@ public class UserServiceImpl implements UserService {
         //验证码和邮箱
         String code = userUpdateInfoDTO.getCode();
         String to = userUpdateInfoDTO.getEmail();
+        if(StrUtil.isBlank(to)){
+            throw new BusinessException(CommonResultCode.PARAM_IS_BLANK);
+        }
 
-
-        captchaService.validateCode(to,code);
+        if(AuthHolder.isAdmin()) {
+            //若为管理员则按用户id修改
+            userId = userUpdateInfoDTO.getId();
+        }else{
+            //非管理员需要检查验证码
+            captchaService.validateCode(to, code);
+        }
         String username = userUpdateInfoDTO.getUsername();
         captchaService.checkUsernameOccupation(username,userId);
 
@@ -360,6 +366,7 @@ public class UserServiceImpl implements UserService {
             throw new BusinessException(UserResultCode.USER_NOT_EXIST);
         }
 
+        //对新密码进行加盐加密
         String encodedPassword = BCrypt.hashpw(userUpdateInfoDTO.getPassword());
         user.setPassword(encodedPassword);
         user.setUsername(username);
@@ -370,6 +377,37 @@ public class UserServiceImpl implements UserService {
         redisService.rmRedis(verificationCodeKey);
         return BeanUtil.copyProperties(user, UserVO.class);
 
+    }
+
+    @Override
+    public void updateUserPassword(UserUpdateInfoDTO userUpdateInfoDTO) {
+        if(ObjectUtil.isEmpty(userUpdateInfoDTO)){
+            throw new BusinessException(CommonResultCode.PARAM_IS_BLANK);
+        }
+
+        //获取用户输入的邮箱验证码和新密码
+        String code = userUpdateInfoDTO.getCode();
+        String password = userUpdateInfoDTO.getPassword();
+        String username = userUpdateInfoDTO.getUsername();
+
+        //通过用户名获取用户邮箱
+        User user = getUserByUsername(username);
+        if (ObjectUtil.isEmpty(user)) {
+            throw new BusinessException(UserResultCode.USER_NOT_EXIST);
+        }
+
+        //进行邮箱验证码校验
+        String to = user.getEmail();
+        captchaService.validateCode(to,code);
+
+        //对新密码进行加盐加密
+        String encodedPassword = BCrypt.hashpw(password);
+        user.setPassword(encodedPassword);
+
+        userDao.updateById(user);
+
+        String verificationCodeKey = RedisKeyUtil.getVerificationCodeKey(to);
+        redisService.rmRedis(verificationCodeKey);
     }
 
     @Override
@@ -389,6 +427,20 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    public User getUserByUsername(String username) {
+        //设置规则
+        LambdaQueryWrapper<User> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(User::getUsername, username);
+
+        //查询数据库数据
+        User user = userDao.selectOne(wrapper);
+        if (ObjectUtil.isEmpty(user)) {
+            throw new BusinessException(UserResultCode.USER_NOT_EXIST);
+        }
+        return user;
+    }
+
+    @Override
     public void deleteUserById(Long id) {
         AuthHolder.judgmentAuth(id);
 
@@ -400,6 +452,11 @@ public class UserServiceImpl implements UserService {
 
     }
 
+    /**
+     * 改变用户状态
+     * @param id 用户id
+     * @param status 状态
+     */
     @Override
     public void changeUserById(Long id, Integer status) {
 
@@ -412,6 +469,10 @@ public class UserServiceImpl implements UserService {
     }
 
 
+    /**
+     * 勇敢通过id删除Redis缓存
+     * @param id 用户id
+     */
     private void rmRedis(Long id){
         String idStr = String.valueOf(id);
         String userIdToAccessTokenKey = RedisKeyUtil.getUserIdToAccessTokenKey(idStr);
