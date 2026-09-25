@@ -9,6 +9,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor  // 自动生成无参构造
 public class Result<T> {
 
+    private Boolean success;
     private Integer code;
     private String msg;
     private T data;
@@ -21,7 +22,7 @@ public class Result<T> {
      * @param <T> 泛型
      */
     public static <T> Result<T> success(ResultCode resultCode) {
-        return new Result<>(resultCode.getCode(),resultCode.getMessage(),null);
+        return new Result<>(true,resultCode.getCode(),resultCode.getMessage(),null);
     }
 
 
@@ -32,7 +33,7 @@ public class Result<T> {
      * @param <T> 泛型
      */
     public static <T> Result<T> success(ResultCode resultCode, T data) {
-        return new Result<>(resultCode.getCode(),resultCode.getMessage(),data);
+        return new Result<>(true,resultCode.getCode(),resultCode.getMessage(),data);
     }
 
     /**
@@ -42,7 +43,7 @@ public class Result<T> {
      * @param <T> 泛型
      */
     public static <T> Result<T> error(ResultCode resultCode){
-        return new Result<>(resultCode.getCode(),resultCode.getMessage(),null);
+        return new Result<>(false,resultCode.getCode(),resultCode.getMessage(),null);
     }
 
     /**
@@ -52,7 +53,7 @@ public class Result<T> {
      * @param <T> 泛型
      */
     public static <T> Result<T> error(ResultCode resultCode, T data){
-        return new Result<>(resultCode.getCode(),resultCode.getMessage(),data);
+        return new Result<>(false,resultCode.getCode(),resultCode.getMessage(),data);
     }
 
 }

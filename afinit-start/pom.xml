@@ -12,6 +12,18 @@
     <artifactId>afinit-start</artifactId>
 
     <dependencies>
+
+        <!--Flyway 数据库的“Git” -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-flyway</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.flywaydb</groupId>
+            <artifactId>flyway-mysql</artifactId>
+            <version>10.10.0</version>
+        </dependency>
+
         <dependency>
             <groupId>top.afinit</groupId>
             <artifactId>afinit-blog</artifactId>

@@ -12,6 +12,14 @@ spring:
     username: mysql用户名
     password: mysql密码
 
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    encoding: UTF-8
+    baseline-on-migrate: true
+    baseline-version: 0
+    clean-disabled: true
+
   application:
     name: shelf
 
