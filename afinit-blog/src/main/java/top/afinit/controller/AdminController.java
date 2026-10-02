@@ -6,6 +6,7 @@ import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
+import org.hibernate.validator.constraints.Range;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import top.afinit.common.result.BlogResultCode;
@@ -33,8 +34,12 @@ public class AdminController {
     public Result<Void> toPublicBlog(@PathVariable
                                      @NotNull(message = "id不能为空")
                                      @Min(value = 1,message = "文章ID格式不合法")
-                                     Long id){
-        blogService.publicBlog(id);
+                                     Long id,
+                                     @RequestParam
+                                     @NotNull(message = "状态不能为空")
+                                     @Range(min = 0, max = 1, message = "状态只能为0或1")
+                                     Integer status){
+        blogService.publicBlog(id,status);
         return Result.success(BlogResultCode.UPDATE_OK);
     }
 
@@ -63,6 +68,7 @@ public class AdminController {
                                       Long id,
                                   @RequestParam
                                   @NotNull(message = "状态不能为空")
+                                  @Range(min = 0, max = 1, message = "状态只能为0或1")
                                   Integer status){
         userService.changeUserById(id,status);
         return Result.success(UserResultCode.UPDATE_USER_OK);

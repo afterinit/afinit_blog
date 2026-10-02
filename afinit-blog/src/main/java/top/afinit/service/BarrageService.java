@@ -13,9 +13,10 @@ public interface BarrageService {
     //存储弹幕并返回id
     void saveBarrage(BarrageDTO barrageDTO);
 
-    //删除弹幕
-    void deleteBarrage(Long id);
+    //通过id删除弹幕
+    void deleteBarrageById(Long id);
 
-
+    //通过blogId删除弹幕
+    void deleteBarrageByBlogId(Long blogId);
 
 }

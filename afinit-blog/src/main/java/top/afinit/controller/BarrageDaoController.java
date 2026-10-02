@@ -43,7 +43,7 @@ public class BarrageDaoController {
                                           @NotNull(message = "id不能为空")
                                           @Min(value = 1,message = "ID格式不合法")
                                           Long id){
-        barrageService.deleteBarrage(id);
+        barrageService.deleteBarrageById(id);
         return Result.error(BarrageResultCode.BARRAGE_DELETE_OK);
     }
 

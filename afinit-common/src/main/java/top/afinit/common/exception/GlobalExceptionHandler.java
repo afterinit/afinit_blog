@@ -27,11 +27,15 @@ public class GlobalExceptionHandler {
     public Result<Void> handleBusinessException(BusinessException e,
                                                 HttpServletRequest request,
                                                 HttpServletResponse response) {
-        log.warn("[业务异常][{} -> {}] 错误码: {}, 原因: {}",
-                request.getMethod(),
-                request.getRequestURI(),
-                e.getResultCode().getCode(),
-                e.getMessage());
+        String logMessage = "\n=================== [自定义异常捕获] ===================\n" +
+                "请求方式: " + request.getMethod() + "\n" +
+                "请求路径: " + request.getRequestURI() + "\n" +
+                "查询参数: " + request.getQueryString() + "\n" +
+                "异常类型: " + e.getClass().getName() + "\n" +
+                "异常原因: " + e.getMessage() + "\n" +
+                "====================================================";
+
+        log.error(logMessage, e);
 
         // 精准匹配：如果是 Token 过期或其他认证相关的错误码，强制设为 401 状态码
         if (AuthResultCode.AUTH_TOKEN_EXPIRED.equals(e.getResultCode())) {

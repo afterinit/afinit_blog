@@ -5,6 +5,7 @@ import cn.hutool.core.util.RandomUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -27,6 +28,7 @@ import top.afinit.service.MailService;
 @SuppressWarnings("SpringJavaInjectionPointsAutowiringInspection")
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class MailServiceImpl implements MailService {
 
     private final MailProperties mailProperties;
@@ -49,6 +51,7 @@ public class MailServiceImpl implements MailService {
         if(StrUtil.isBlank(to)){
             if(StrUtil.isBlank(username)) {
                 //若同时为空返回报错
+                log.warn("[发送邮件-失败]:邮箱与用户名均为空");
                 throw new BusinessException(CommonResultCode.PARAM_IS_BLANK);
             }else{
                 //设置规则
@@ -58,12 +61,14 @@ public class MailServiceImpl implements MailService {
                 //查询数据库数据
                 User user = userDao.selectOne(wrapper);
                 if (ObjectUtil.isEmpty(user)) {
+                    log.warn("[发送邮件-失败]:用户名不存在。user_id={}", username);
                     throw new BusinessException(UserResultCode.USER_NOT_EXIST);
                 }
                 to = user.getEmail();
             }
         }else if(!StrUtil.isBlank(username)){
             //若同时存在邮箱和用户名返回报错
+            log.warn("[发送邮件-失败]:用户名与邮箱同时存在。user_id={},email={}", username,to);
             throw new BusinessException(CommonResultCode.PARAM_ERR);
         }
 
@@ -71,6 +76,7 @@ public class MailServiceImpl implements MailService {
         String lockKey = RedisKeyUtil.getVerificationCodeLockKey(to);
         String hashSent = stringRedisTemplate.opsForValue().get(lockKey);
         if(!StrUtil.isBlank(hashSent)){
+            log.warn("[发送邮件-失败]:发送邮件过于频繁。email={}",to);
             throw new BusinessException(VerResultCode.SEND_CODE_TOO_FREQUENT);
         }
 
@@ -98,11 +104,13 @@ public class MailServiceImpl implements MailService {
             simpleMailMessage.setText(textPre + code + MailConstants.SIGN_UP_AFT);
 
             javaMailSender.send(simpleMailMessage);
+            log.info("[发送邮件-成功]:email={},code={}", to, code);
         }catch (Exception e){
             // 异常回滚：邮件发送失败，立刻抹除 Redis 中的验证码和频率锁
             stringRedisTemplate.delete(verVerificationCodeKey);
             stringRedisTemplate.delete(lockKey);
 
+            log.warn("[发送邮件-失败]:email={}",to);
             // 向上抛出系统未知错误，触发全局异常处理器记录堆栈日志，并友好提示前端
             throw new BusinessException(CommonResultCode.SYSTEM_UNKNOWN_ERR);
         }

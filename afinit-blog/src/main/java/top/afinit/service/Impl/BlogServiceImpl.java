@@ -7,10 +7,12 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import top.afinit.common.auth.AuthHolder;
 import top.afinit.common.auth.AuthUser;
 import top.afinit.common.exception.BusinessException;
+import top.afinit.common.result.AuthResultCode;
 import top.afinit.common.result.BlogResultCode;
 import top.afinit.common.result.CommonResultCode;
 import top.afinit.dao.BlogDao;
@@ -20,6 +22,7 @@ import top.afinit.domain.entity.Blog;
 import top.afinit.domain.entity.User;
 import top.afinit.domain.vo.BlogVO;
 import top.afinit.domain.vo.UserNicknameVO;
+import top.afinit.service.BarrageService;
 import top.afinit.service.BlogService;
 import top.afinit.service.UserService;
 
@@ -30,14 +33,15 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class BlogServiceImpl implements BlogService {
-
 
     private final BlogDao blogDao;
 
     private final UserService userService;
-
     private final UserDao userDao;
+
+    private final BarrageService barrageService;
 
     @Override
     public Long saveBlog(BlogDTO blogDTO) {
@@ -45,12 +49,14 @@ public class BlogServiceImpl implements BlogService {
 
         if(!AuthHolder.isAdmin()){
             blog.setStatus(0);
+            log.info("[发布文章-文章状态改变-成功]:非管理员文章设为不可见。blog_id={},user_id={}", blog.getId(),AuthHolder.getUser().getId());
         }
 
         AuthUser authUser = AuthHolder.getUser();
         blog.setUserId(authUser.getId());
 
         blogDao.insert(blog);
+        log.info("[文章发布-成功]:blog_id={},user_id={},blog_status={}", blog.getId(), blog.getUserId(), blog.getStatus());
 
         return blog.getId();
     }
@@ -61,6 +67,7 @@ public class BlogServiceImpl implements BlogService {
         Blog blog = blogDao.selectById(blogDTO.getId());
 
         if(ObjectUtil.isEmpty(blog)){
+            log.warn("[更新博客内容-失败]:不存在blog_id={}", blogDTO.getId());
             throw new BusinessException(CommonResultCode.DATA_NOT_EXIST);
         }
 
@@ -70,9 +77,12 @@ public class BlogServiceImpl implements BlogService {
 
         if(!AuthHolder.isAdmin()){
             newBlog.setStatus(0);
+            log.info("[修改文章-文章状态改变-成功]:非管理员设为不可见");
         }
 
         blogDao.updateById(newBlog);
+        log.info("[文章更新-成功]:blog_id={},user_id={},blog_status={}", newBlog.getId(), newBlog.getUserId(), newBlog.getStatus());
+
     }
 
     @Override
@@ -80,12 +90,15 @@ public class BlogServiceImpl implements BlogService {
         Blog blog = blogDao.selectById(id);
 
         if(ObjectUtil.isEmpty(blog)){
+            log.warn("[删除文章-失败]:不存在blog_id={}",id);
             throw new BusinessException(CommonResultCode.DATA_NOT_EXIST);
         }
 
         AuthHolder.judgmentAuth(blog.getUserId());
 
         blogDao.deleteById(id);
+        log.info("[删除文章-成功]:blog_id={},user_id={}", blog.getId(), blog.getUserId());
+        barrageService.deleteBarrageByBlogId(id);
 
     }
 
@@ -120,12 +133,14 @@ public class BlogServiceImpl implements BlogService {
         wrapper.select(Blog.class,fieldInfo -> !fieldInfo.getColumn().equals("content"));
         wrapper.eq(Blog::getStatus,0);
         //非管理员只能查询自己的草稿文章
+        Long userId = AuthHolder.getUser().getId();
         if(!AuthHolder.isAdmin()) {
-            wrapper.eq(Blog::getUserId, AuthHolder.getUser().getId());
+            wrapper.eq(Blog::getUserId, userId);
         }
         wrapper.orderByDesc(Blog::getCreateTime);
 
         Page<Blog> blogIPage = new Page<>(page, size);
+        log.info("[获取私有分页文章-成功]:user_id={}", userId);
         return getByPage(blogIPage,wrapper);
     }
 
@@ -135,20 +150,26 @@ public class BlogServiceImpl implements BlogService {
         wrapper.eq(Blog::getId,id)
                 .eq(Blog::getStatus,0);
         //非管理员只能查询自己的草稿文章
+        Long userId = AuthHolder.getUser().getId();
         if(!AuthHolder.isAdmin()){
-            wrapper.eq(Blog::getUserId, AuthHolder.getUser().getId());
+            wrapper.eq(Blog::getUserId, userId);
         }
-
+        log.info("[获取私有单个文章-成功]:blog_id={},user_id={}", id, userId);
         return getById(wrapper);
     }
 
     @Override
-    public void publicBlog(Long id) {
-
+    public void publicBlog(Long id,Integer status) {
+        Long userId = AuthHolder.getUser().getId();
+        if(!AuthHolder.isAdmin()){
+            log.warn("[公开文章-失败]:权限不足user_id={}", userId);
+            throw new BusinessException(AuthResultCode.AUTH_PERMISSION_DENIED);
+        }
         Blog blog = new Blog();
         blog.setId(id);
-        blog.setStatus(1);
+        blog.setStatus(status);
         blogDao.updateById(blog);
+        log.info("[管理员-文章状态改变-成功]:blog_id={},user_id={},status={}", blog.getId(),userId,status);
 
     }
 
@@ -168,6 +189,7 @@ public class BlogServiceImpl implements BlogService {
         Blog blog = blogDao.selectOne(wrapper);
 
         if(ObjectUtil.isEmpty(blog)){
+            log.warn("[通过id查询文章-失败]:文章不存在");
             throw new BusinessException(BlogResultCode.GET_ERR);
         }
 
@@ -179,6 +201,7 @@ public class BlogServiceImpl implements BlogService {
             blogVO.setNickname(user.getNickname());
         }
 
+        log.info("[通过id查询文章-成功]:blog_id={},user_id={},blog_status={}", blog.getId(), blog.getUserId(), blog.getStatus());
         return blogVO;
     }
 
@@ -191,14 +214,16 @@ public class BlogServiceImpl implements BlogService {
         List<Blog> blogRecords = blogIPage.getRecords();
 
         if (CollUtil.isEmpty(blogRecords)) {
+            log.warn("[按页查询文章-失败]:文章不存在");
             return blogIPage.convert(blog -> BeanUtil.copyProperties(blog, BlogVO.class));
         }
 
+        //获取文章对应的userIds
         Set<Long> userIds = blogRecords.stream()
                 .map(Blog::getUserId)
                 .collect(Collectors.toSet());
 
-
+        //通过userIds得到userNickname
         List<UserNicknameVO> users = userService.listByIds(userIds);
 
         Map<Long, String> userMap = users.stream()
@@ -216,8 +241,7 @@ public class BlogServiceImpl implements BlogService {
     public IPage<BlogVO> getPersonalByPage(Long page, Long size){
 
         //获取用户id
-        AuthUser authUser = AuthHolder.getUser();
-        Long userId = authUser.getId();
+        Long userId = AuthHolder.getUser().getId();
 
         LambdaQueryWrapper<Blog> wrapper = new LambdaQueryWrapper<>();
         wrapper.select(Blog.class,fieldInfo -> !fieldInfo.getColumn().equals("content"));

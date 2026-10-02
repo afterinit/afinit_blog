@@ -4,6 +4,7 @@ import cn.hutool.core.util.StrUtil;
 import cn.hutool.crypto.SecureUtil;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import top.afinit.common.constant.RedisConstants;
 import top.afinit.common.exception.BusinessException;
@@ -16,6 +17,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Date;
 
 @Service
+@Slf4j
 public class JwtServiceImpl implements JwtService {
     private final SecretKey key;
 
@@ -50,12 +52,14 @@ public class JwtServiceImpl implements JwtService {
 
         //判断refreshToken是否为空
         if(StrUtil.isBlank(refreshToken)){
+            log.warn("[刷新AccessToken-失败]:refreshToken为空");
             throw new BusinessException(AuthResultCode.AUTH_TOKEN_MISSING);
         }
 
         //通过refreshToken获取值用户id
         String userId = parseToken(refreshToken);
         if(StrUtil.isBlank(userId)){
+            log.warn("[刷新AccessToken-失败]:userId不存在。refresh_token={}", refreshToken);
             throw new BusinessException(AuthResultCode.AUTH_TOKEN_INVALID);
         }
 
@@ -65,13 +69,16 @@ public class JwtServiceImpl implements JwtService {
 
         if(StrUtil.isBlank(oldValue)){
             //refreshToken已过期,需重新登录
+            log.warn("[刷新AccessToken-失败]:old_value为空");
             throw new BusinessException(AuthResultCode.AUTH_TOKEN_EXPIRED);
         }
 
         if(!oldValue.equals(value)){
+            log.warn("[刷新AccessToken-失败]:token校验失败，value={},old_token={}",value,oldValue);
             throw new BusinessException(AuthResultCode.AUTH_TOKEN_INVALID);
         }
 
+        log.info("[刷新AccessToken-成功]:user_id={}", userId);
         return createToken(userId, RedisConstants.User.ACCESS_TOKEN_MS_TTL);
     }
 

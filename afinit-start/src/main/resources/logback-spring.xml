@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <!-- 日志存放根目录 -->
+    <property name="LOG_HOME" value="logs" />
+    <!-- 日志输出格式 -->
+    <property name="LOG_PATTERN" value="%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n" />
+
+    <!-- 1. 控制台输出 -->
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>${LOG_PATTERN}</pattern>
+            <charset>UTF-8</charset>
+        </encoder>
+    </appender>
+
+    <!-- 2. 博客模块日志文件（每天一个文件） -->
+    <appender name="BLOG_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${LOG_HOME}/blog.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <!-- 每天归档文件名格式，如 blog-2026-10-01.log -->
+            <fileNamePattern>${LOG_HOME}/blog-%d{yyyy-MM-dd}.log</fileNamePattern>
+            <!-- 保留 30 天 -->
+            <maxHistory>30</maxHistory>
+        </rollingPolicy>
+        <encoder>
+            <pattern>${LOG_PATTERN}</pattern>
+            <charset>UTF-8</charset>
+        </encoder>
+    </appender>
+
+    <!-- 3. 用户模块日志文件（每天一个文件） -->
+    <appender name="USER_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${LOG_HOME}/user.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>${LOG_HOME}/user-%d{yyyy-MM-dd}.log</fileNamePattern>
+            <maxHistory>30</maxHistory>
+        </rollingPolicy>
+        <encoder>
+            <pattern>${LOG_PATTERN}</pattern>
+            <charset>UTF-8</charset>
+        </encoder>
+    </appender>
+
+    <!-- 4. 弹幕模块日志文件（每天一个文件） -->
+    <appender name="BARRAGE_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${LOG_HOME}/barrage.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>${LOG_HOME}/barrage-%d{yyyy-MM-dd}.log</fileNamePattern>
+            <maxHistory>30</maxHistory>
+        </rollingPolicy>
+        <encoder>
+            <pattern>${LOG_PATTERN}</pattern>
+            <charset>UTF-8</charset>
+        </encoder>
+    </appender>
+
+    <!-- 针对博客相关类的路由规则 -->
+    <logger name="top.afinit.controller.BlogController" level="INFO" additivity="true">
+        <appender-ref ref="BLOG_FILE" />
+    </logger>
+    <logger name="top.afinit.service.Impl.BlogServiceImpl" level="INFO" additivity="true">
+        <appender-ref ref="BLOG_FILE" />
+    </logger>
+
+    <!-- 针对用户相关类或包的路由规则 -->
+    <logger name="top.afinit.controller.UserController" level="INFO" additivity="true">
+        <appender-ref ref="USER_FILE" />
+    </logger>
+    <logger name="top.afinit.service.Impl.UserServiceImpl" level="INFO" additivity="true">
+        <appender-ref ref="USER_FILE" />
+    </logger>
+
+
+    <!-- 针对弹幕相关类的路由规则 -->
+    <logger name="top.afinit.controller.BarrageDaoController" level="INFO" additivity="true">
+        <appender-ref ref="BARRAGE_FILE" />
+    </logger>
+    <logger name="top.afinit.service.Impl.BarrageDaoControllerImpl" level="INFO" additivity="true">
+        <appender-ref ref="USER_FILE" />
+    </logger>
+
+    <!-- 全局根日志：控制台输出 -->
+    <root level="INFO">
+        <appender-ref ref="CONSOLE" />
+    </root>
+</configuration>

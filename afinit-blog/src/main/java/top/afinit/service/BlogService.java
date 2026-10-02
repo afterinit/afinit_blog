@@ -64,7 +64,7 @@ public interface BlogService {
      * 公开博客
      * @param id 博客id
      */
-    void publicBlog(Long id);
+    void publicBlog(Long id,Integer status);
 
     /**
      * 获取所有公开文章的id

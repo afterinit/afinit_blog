@@ -12,6 +12,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import top.afinit.common.auth.AuthHolder;
@@ -40,6 +41,7 @@ import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class UserServiceImpl implements UserService {
 
     private final UserDao userDao;
@@ -63,16 +65,19 @@ public class UserServiceImpl implements UserService {
 
         //根据用户名查询数据库
         LambdaQueryWrapper<User> wrapper = new LambdaQueryWrapper<>();
-        wrapper.eq(User::getUsername, userLoginDTO.getUsername());
+        String username = userLoginDTO.getUsername();
+        wrapper.eq(User::getUsername, username);
         User user = userDao.selectOne(wrapper);
 
         //判断该用户数据库是否存在
         if(ObjectUtil.isEmpty(user)){
+            log.warn("[登录-失败]:用户名不存在。username={}", username);
             throw new BusinessException(UserResultCode.USER_NOT_EXIST);
         }
 
         //查看是否被冻结
         if(user.getStatus()!=1){
+            log.warn("[登录-失败]:账号已被停用。username={}", username);
             throw new BusinessException(UserResultCode.USER_ACCOUNT_LOCKED);
         }
 
@@ -83,6 +88,7 @@ public class UserServiceImpl implements UserService {
 
         //判断密码是否正确
         if(!BCrypt.checkpw(inputPassword, dbPassword)){
+            log.warn("[登录-失败]:密码错误。username={}", username);
             throw new BusinessException(UserResultCode.USER_PASSWORD_ERR);
         }
 
@@ -136,7 +142,7 @@ public class UserServiceImpl implements UserService {
                 RedisConstants.User.MAPPING_TOKEN_TTL,
                 RedisConstants.User.MAPPING_TOKEN_UNIT);
 
-
+        log.info("[登录-成功]:user_id={},username={}",userId,username);
         return LoginTokenVO.builder()
                 .accessToken(accessToken)
                 .refreshToken(refreshToken)
@@ -174,6 +180,7 @@ public class UserServiceImpl implements UserService {
         //删除redis存储的验证码
         String verificationCodeKey = RedisKeyUtil.getVerificationCodeKey(to);
         redisService.rmRedis(verificationCodeKey);
+        log.info("[注册-成功]:username={}",username);
 
     }
 
@@ -215,6 +222,7 @@ public class UserServiceImpl implements UserService {
                 RedisConstants.User.MAPPING_TOKEN_TTL,
                 RedisConstants.User.MAPPING_TOKEN_UNIT);
 
+        log.info("[刷新AccessToken-成功]:user_id={}",userId);
         return LoginTokenVO.builder()
                 .accessToken(newAccessToken)
                 .refreshToken(refreshToken)
@@ -265,12 +273,14 @@ public class UserServiceImpl implements UserService {
         String accessKey = RedisKeyUtil.getAccessKey(authUser.getAccessToken());
         Map<Object, Object> tokenHash = redisService.getTokenHash(accessKey);
         if(ObjectUtil.isEmpty(tokenHash)){
+            log.warn("[通过token获取用户信息-失败]:用户信息为空");
             throw new BusinessException(AuthResultCode.AUTH_TOKEN_MISSING);
         }
 
         UserVO userVO = BeanUtil.toBean(tokenHash, UserVO.class);
 
         AuthHolder.judgmentAuth(userVO.getId());
+        log.info("[通过token获取用户信息-成功]:user_id={},username={}", userVO.getId(),userVO.getUsername());
         return userVO;
 
 
@@ -280,6 +290,7 @@ public class UserServiceImpl implements UserService {
     public String updateUserNickname(UserUpdateNicknameDTO userUpdateNicknameDTO) {
 
         if(ObjectUtil.isEmpty(userUpdateNicknameDTO)){
+            log.warn("[更新用户昵称-失败]:传入参数为空");
             throw new BusinessException(CommonResultCode.PARAM_IS_BLANK);
         }
 
@@ -300,6 +311,7 @@ public class UserServiceImpl implements UserService {
         redisService.addHashValue(accessKey,RedisConstants.User.Param.FIELD_NICKNAME,
                 nickname);
 
+        log.info("[更新用户昵称-成功]:nickname={}", nickname);
         return nickname;
 
     }
@@ -312,6 +324,7 @@ public class UserServiceImpl implements UserService {
 
         User user = userDao.selectById(realUserId);
         if(ObjectUtil.isEmpty(user)){
+            log.warn("[更新头像-失败]:用户不存在。user_id={}", realUserId);
             throw new BusinessException(UserResultCode.USER_NOT_EXIST);
         }
 
@@ -333,6 +346,7 @@ public class UserServiceImpl implements UserService {
 
         redisService.addHashValue(accessKey,RedisConstants.User.Param.FIELD_AVATAR, newAvatarUrl);
 
+        log.info("[更新头像-成功]:usert_id={},new_avatar_url={}", realUserId, newAvatarUrl);
         return newAvatarUrl;
 
 
@@ -348,6 +362,7 @@ public class UserServiceImpl implements UserService {
         String code = userUpdateInfoDTO.getCode();
         String to = userUpdateInfoDTO.getEmail();
         if(StrUtil.isBlank(to)){
+            log.warn("[更新用户信息-失败]:邮箱为空。user_id={}", userId);
             throw new BusinessException(CommonResultCode.PARAM_IS_BLANK);
         }
 
@@ -363,6 +378,7 @@ public class UserServiceImpl implements UserService {
 
         User user = userDao.selectById(userId);
         if (ObjectUtil.isEmpty(user)) {
+            log.warn("[更新用户信息-失败]:用户不存在。user_id={}", userId);
             throw new BusinessException(UserResultCode.USER_NOT_EXIST);
         }
 
@@ -375,6 +391,7 @@ public class UserServiceImpl implements UserService {
 
         String verificationCodeKey = RedisKeyUtil.getVerificationCodeKey(to);
         redisService.rmRedis(verificationCodeKey);
+        log.info("[更新用户信息-成功]:user_id={}", userId);
         return BeanUtil.copyProperties(user, UserVO.class);
 
     }
@@ -382,6 +399,7 @@ public class UserServiceImpl implements UserService {
     @Override
     public void updateUserPassword(UserUpdateInfoDTO userUpdateInfoDTO) {
         if(ObjectUtil.isEmpty(userUpdateInfoDTO)){
+            log.warn("[更新用户密码-失败]:传入参数为空");
             throw new BusinessException(CommonResultCode.PARAM_IS_BLANK);
         }
 
@@ -393,6 +411,7 @@ public class UserServiceImpl implements UserService {
         //通过用户名获取用户邮箱
         User user = getUserByUsername(username);
         if (ObjectUtil.isEmpty(user)) {
+            log.warn("[更新用户密码-失败]:用户不存在。username={}", username);
             throw new BusinessException(UserResultCode.USER_NOT_EXIST);
         }
 
@@ -408,6 +427,7 @@ public class UserServiceImpl implements UserService {
 
         String verificationCodeKey = RedisKeyUtil.getVerificationCodeKey(to);
         redisService.rmRedis(verificationCodeKey);
+        log.info("[更新用户密码-成功]:user_id={}", user.getId());
     }
 
     @Override
@@ -435,8 +455,10 @@ public class UserServiceImpl implements UserService {
         //查询数据库数据
         User user = userDao.selectOne(wrapper);
         if (ObjectUtil.isEmpty(user)) {
+            log.warn("[获取用户信息-失败]:用户不存在。username={}", username);
             throw new BusinessException(UserResultCode.USER_NOT_EXIST);
         }
+        log.info("[获取用户信息-成功]:user_id={}", user.getId());
         return user;
     }
 
@@ -449,7 +471,7 @@ public class UserServiceImpl implements UserService {
 
         //数据库删除
         userDao.deleteById(id);
-
+        log.info("[删除用户信息-成功]:user_id={}", id);
     }
 
     /**
@@ -466,11 +488,12 @@ public class UserServiceImpl implements UserService {
 
         userDao.updateById(user);
         rmRedis(id);
+        log.info("[改变用户信息-成功]:user_id={},status={}", id, status);
     }
 
 
     /**
-     * 勇敢通过id删除Redis缓存
+     * 通过id删除Redis缓存
      * @param id 用户id
      */
     private void rmRedis(Long id){
